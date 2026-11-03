@@ -1,0 +1,21 @@
+{
+  "name": "Sistem Pengurusan Kejohanan Sukan",
+  "short_name": "Kejohanan Sukan",
+  "description": "Sistem Pengurusan Kejohanan Sukan Tahunan SK Maludam (YBA2108)",
+  "lang": "ms",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "fullscreen", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#081d4a",
+  "theme_color": "#0b2a6b",
+  "categories": ["education", "sports"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

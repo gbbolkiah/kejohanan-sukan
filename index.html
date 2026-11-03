@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sistem Pengurusan Kejohanan Sukan</title>
+<meta name="description" content="Sistem Pengurusan Kejohanan Sukan Tahunan SK Maludam">
+<meta name="theme-color" content="#0b2a6b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kejohanan Sukan">
+<style>
+  :root { --navy: #0b2a6b; --navy2: #081d4a; --gold: #f5b301; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--navy2); overflow: hidden; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+  #app { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; background: #eef2f9; padding-top: env(safe-area-inset-top); }
+  #splash { position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: #fff; text-align: center; padding: 20px;
+    background: radial-gradient(circle at 50% 35%, #16408f 0%, var(--navy) 45%, var(--navy2) 100%); transition: opacity .4s; }
+  #splash.hide { opacity: 0; pointer-events: none; }
+  #splash img { width: 160px; height: 160px; filter: drop-shadow(0 10px 25px rgba(0,0,0,.45)); animation: pulse 1.6s ease-in-out infinite; }
+  #splash b { font-size: 22px; letter-spacing: .3px; }
+  #splash small { opacity: .8; }
+  .bar { width: 160px; height: 4px; border-radius: 4px; background: rgba(255,255,255,.2); overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 40%; background: var(--gold); animation: slide 1s linear infinite; }
+  @keyframes pulse { 50% { transform: scale(1.05); } }
+  @keyframes slide { from { margin-left: -40%; } to { margin-left: 100%; } }
+  #tip { display: none; margin-top: 8px; font-size: 13px; opacity: .9; max-width: 340px; }
+  #tip button, .btn { margin-top: 10px; background: var(--gold); color: #3a2a00; border: 0; border-radius: 10px; padding: 10px 16px; font-weight: 700; font-size: 14px; cursor: pointer; }
+  #toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 20; background: rgba(8,29,74,.95); color: #fff;
+    padding: 10px 16px; border-radius: 10px; font-size: 14px; opacity: 0; transition: opacity .3s; pointer-events: none; max-width: 90vw; text-align: center; }
+  #toast.on { opacity: 1; }
+  #offline { position: fixed; top: 0; left: 0; right: 0; z-index: 30; display: none; background: #b91c1c; color: #fff; text-align: center; font-size: 13px; padding: 6px calc(10px + env(safe-area-inset-right)) 6px 10px; padding-top: calc(6px + env(safe-area-inset-top)); }
+  #setup { display: none; position: fixed; inset: 0; z-index: 40; background: #eef2f9; color: #14213d; overflow: auto; padding: 24px; }
+  #setup .card { max-width: 640px; margin: 0 auto; background: #fff; border-radius: 16px; padding: 22px; box-shadow: 0 6px 20px rgba(11,42,107,.12); }
+  #setup h2 { color: var(--navy); margin-top: 0; }
+  #setup code { background: #eef2f9; padding: 2px 6px; border-radius: 6px; word-break: break-all; }
+</style>
+</head>
+<body>
+
+<div id="offline">⚠️ Tiada sambungan internet. Sistem akan dimuat semula apabila talian pulih.</div>
+
+<div id="splash">
+  <img src="logo.png" alt="Logo Sistem Pengurusan Sukan">
+  <b>SISTEM PENGURUSAN KEJOHANAN SUKAN</b>
+  <small>SK Maludam · Memuatkan sistem...</small>
+  <div class="bar"><i></i></div>
+  <div id="tip">Sistem mengambil masa lebih lama daripada biasa. Semak sambungan internet anda.<br><button onclick="muatSemula()">🔄 Muat Semula</button></div>
+</div>
+
+<iframe id="app" title="Sistem Pengurusan Kejohanan Sukan"
+  allow="clipboard-read; clipboard-write; fullscreen; geolocation; camera; microphone"
+  referrerpolicy="no-referrer-when-downgrade"></iframe>
+
+<div id="setup"><div class="card">
+  <h2>⚙️ Tetapan belum lengkap</h2>
+  <p>Pautan Web App Google Apps Script belum dimasukkan.</p>
+  <ol>
+    <li>Di Apps Script: <b>Deploy › Manage deployments</b>, salin <b>Web app URL</b> (berakhir dengan <code>/exec</code>).</li>
+    <li>Di GitHub, buka fail <code>config.js</code> › ✏️ Edit, tampal pautan pada <code>APP_URL</code>, kemudian <b>Commit changes</b>.</li>
+    <li>Tunggu 1–2 minit, kemudian muat semula halaman ini.</li>
+  </ol>
+</div></div>
+
+<div id="toast"></div>
+
+<script src="config.js"></script>
+<script>
+  (function () {
+    var cfg = window.KONFIG || {};
+    var url = String(cfg.APP_URL || '').trim();
+    var frame = document.getElementById('app');
+    var splash = document.getElementById('splash');
+
+    if (cfg.NAMA_APP) document.title = cfg.NAMA_APP;
+
+    if (!/^https:\/\/script\.google(usercontent)?\.com\/.+/.test(url)) {
+      splash.classList.add('hide');
+      document.getElementById('setup').style.display = 'block';
+      return;
+    }
+
+    function tunjukToast(msg) {
+      var t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('on');
+      clearTimeout(t._h); t._h = setTimeout(function () { t.classList.remove('on'); }, 2200);
+    }
+
+    // Muat sistem dalam iframe (URL Apps Script disembunyikan daripada pengguna)
+    frame.src = url;
+    var siap = false;
+    frame.addEventListener('load', function () {
+      siap = true;
+      setTimeout(function () { splash.classList.add('hide'); }, 600);
+    });
+    setTimeout(function () { if (!siap) document.getElementById('tip').style.display = 'block'; }, 15000);
+
+    window.muatSemula = function () {
+      document.getElementById('tip').style.display = 'none';
+      splash.classList.remove('hide'); siap = false;
+      frame.src = url + (url.indexOf('?') < 0 ? '?' : '&') + 't=' + Date.now();
+    };
+
+    // Butang Back TIDAK menutup aplikasi — hanya pengguna yang menutupnya sendiri.
+    history.replaceState({ skm: 1 }, '');
+    history.pushState({ skm: 2 }, '');
+    window.addEventListener('popstate', function () {
+      history.pushState({ skm: 2 }, '');
+      tunjukToast('Gunakan menu dalam sistem untuk navigasi. Tutup aplikasi untuk keluar.');
+    });
+
+    // Status talian
+    var off = document.getElementById('offline');
+    function semakTalian() { off.style.display = navigator.onLine ? 'none' : 'block'; }
+    window.addEventListener('offline', semakTalian);
+    window.addEventListener('online', function () { semakTalian(); tunjukToast('Talian pulih. Memuat semula...'); window.muatSemula(); });
+    semakTalian();
+
+    // Service worker: membolehkan aplikasi dipasang (Add to Home Screen) dan ikon/splash dimuat pantas
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+    }
+  })();
+</script>
+</body>
+</html>
